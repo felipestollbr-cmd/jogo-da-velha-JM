@@ -3,10 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <title>Jogo da Velha JM</title>
-    <link rel="manifest" href="manifest.json">
-    
     <style>
         body {
             display: flex;
@@ -17,14 +14,12 @@
             margin: 0;
             background-color: yellowgreen;
             font-family: sans-serif;
-            /* Impede que o usuário dê zoom acidental clicando rápido */
-            touch-action: manipulation; 
+            touch-action: manipulation;
         }
 
         #status-container {
             text-align: center;
             margin-bottom: 20px;
-            width: 90%;
         }
 
         #turno {
@@ -36,15 +31,14 @@
 
         .tabuleiro {
             display: grid;
-            /* Usamos 'vw' (view width) para o tabuleiro ser responsivo */
             grid-template-columns: repeat(3, 28vw); 
             grid-template-rows: repeat(3, 28vw);
             grid-gap: 8px;
             background-color: #004;
             padding: 8px;
             border-radius: 12px;
-            max-width: 400px; /* Limite para não ficar gigante em tablets */
-            max-height: 400px;
+            max-width: 380px;
+            max-height: 380px;
         }
 
         .celula {
@@ -52,15 +46,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem; /* X e O bem grandes */
+            font-size: 3.5rem;
             font-weight: bold;
             cursor: pointer;
             border-radius: 8px;
-            transition: background 0.2s;
         }
 
-        .celula:active {
-            background-color: #ddd;
+        .celula.vitoria {
+            background-color: #4CAF50 !important;
+            color: white !important;
         }
 
         .assinatura {
@@ -78,15 +72,14 @@
             background: #333;
             color: white;
             font-weight: bold;
+            cursor: pointer;
         }
 
-        /* Ajuste para telas de computador (não deixar o tabuleiro gigante) */
         @media (min-width: 500px) {
             .tabuleiro {
                 grid-template-columns: repeat(3, 120px);
                 grid-template-rows: repeat(3, 120px);
             }
-            .celula { font-size: 4rem; }
         }
     </style>
 </head>
@@ -112,8 +105,71 @@
     <div class="assinatura">by João Marcelo</div>
 
     <script>
-        // Use a lógica do Script anterior (Local ou Online) aqui
-        // O CSS acima já vai garantir que o tamanho fique perfeito!
+        const celulas = document.querySelectorAll('.celula');
+        const turnoDisplay = document.getElementById("turno");
+        let jogadorAtual = "X";
+        let jogoAtivo = true;
+        let estadoJogo = ["", "", "", "", "", "", "", "", ""];
+
+        const condicoesVitoria = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        function clicarCelula(event) {
+            const celulaClicada = event.target;
+            const index = celulaClicada.getAttribute('data-index');
+
+            if (estadoJogo[index] !== "" || !jogoAtivo) return;
+
+            estadoJogo[index] = jogadorAtual;
+            celulaClicada.innerText = jogadorAtual;
+            celulaClicada.style.color = (jogadorAtual === "X") ? "#d32f2f" : "#1976d2";
+
+            verificarResultado();
+        }
+
+        function verificarResultado() {
+            let rodadaGanhou = false;
+
+            for (let i = 0; i < condicoesVitoria.length; i++) {
+                const [a, b, c] = condicoesVitoria[i];
+                if (estadoJogo[a] && estadoJogo[a] === estadoJogo[b] && estadoJogo[a] === estadoJogo[c]) {
+                    rodadaGanhou = true;
+                    [a, b, c].forEach(idx => celulas[idx].classList.add('vitoria'));
+                    break;
+                }
+            }
+
+            if (rodadaGanhou) {
+                turnoDisplay.innerText = `Jogador ${jogadorAtual} Venceu! 🎉`;
+                jogoAtivo = false;
+                return;
+            }
+
+            if (!estadoJogo.includes("")) {
+                turnoDisplay.innerText = "Empate! 👵";
+                jogoAtivo = false;
+                return;
+            }
+
+            jogadorAtual = (jogadorAtual === "X") ? "O" : "X";
+            turnoDisplay.innerText = `Vez do Jogador: ${jogadorAtual}`;
+        }
+
+        function reiniciarJogo() {
+            jogadorAtual = "X";
+            jogoAtivo = true;
+            estadoJogo = ["", "", "", "", "", "", "", "", ""];
+            turnoDisplay.innerText = "Vez do Jogador: X";
+            celulas.forEach(celula => {
+                celula.innerText = "";
+                celula.classList.remove('vitoria');
+            });
+        }
+
+        celulas.forEach(celula => celula.addEventListener('click', clicarCelula));
     </script>
 </body>
 </html>

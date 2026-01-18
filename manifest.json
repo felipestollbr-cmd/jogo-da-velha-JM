@@ -1,0 +1,15 @@
+{
+  "name": "Jogo da Velha João Marcelo",
+  "short_name": "VelhaJM",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#9ACD32",
+  "theme_color": "#9ACD32",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/566/566294.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

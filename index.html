@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <link rel="manifest" href="manifest.json">
+    <title>Jogo da Velha do João Marcelo</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: yellowgreen;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #status-container {
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        #turno {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .tabuleiro {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            background-color: #004;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .celula {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .celula:hover {
+            background-color: #f0f0f0;
+        }
+
+        .celula.vitoria {
+            background-color: #4CAF50 !important;
+            color: white !important;
+        }
+
+        /* Estilo para o seu nome */
+        .assinatura {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #004;
+            letter-spacing: 1px;
+            font-style: italic;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+            transition: 0.2s;
+        }
+        
+        button:hover { background-color: #555; }
+    </style>
+</head>
+<body>
+
+    <div id="status-container">
+        <div id="turno">Vez do Jogador: X</div>
+        <button onclick="reiniciarJogo()">Reiniciar Jogo</button>
+    </div>
+
+    <div id="tabuleiro" class="tabuleiro">
+        <div class="celula" data-index="0"></div>
+        <div class="celula" data-index="1"></div>
+        <div class="celula" data-index="2"></div>
+        <div class="celula" data-index="3"></div>
+        <div class="celula" data-index="4"></div>
+        <div class="celula" data-index="5"></div>
+        <div class="celula" data-index="6"></div>
+        <div class="celula" data-index="7"></div>
+        <div class="celula" data-index="8"></div>
+    </div>
+
+    <div class="assinatura">by João Marcelo</div>
+
+    <script>
+        const celulas = document.querySelectorAll('.celula');
+        const turnoDisplay = document.getElementById("turno");
+        let jogadorAtual = "X";
+        let jogoAtivo = true;
+        let estadoJogo = ["", "", "", "", "", "", "", "", ""];
+
+        const condicoesVitoria = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        celulas.forEach(celula => {
+            celula.addEventListener('click', clicarCelula);
+        });
+
+        function clicarCelula(event) {
+            const celulaClicada = event.target;
+            const index = celulaClicada.getAttribute('data-index');
+
+            if (estadoJogo[index] !== "" || !jogoAtivo) return;
+
+            marcarJogada(celulaClicada, index);
+            verificarResultado();
+        }
+
+        function marcarJogada(celula, index) {
+            estadoJogo[index] = jogadorAtual;
+            celula.innerText = jogadorAtual;
+            celula.style.color = (jogadorAtual === "X") ? "#d32f2f" : "#1976d2";
+        }
+
+        function verificarResultado() {
+            let rodadaGanhou = false;
+
+            for (let i = 0; i < condicoesVitoria.length; i++) {
+                const [a, b, c] = condicoesVitoria[i];
+                if (estadoJogo[a] && estadoJogo[a] === estadoJogo[b] && estadoJogo[a] === estadoJogo[c]) {
+                    rodadaGanhou = true;
+                    [a, b, c].forEach(idx => celulas[idx].classList.add('vitoria'));
+                    break;
+                }
+            }
+
+            if (rodadaGanhou) {
+                turnoDisplay.innerText = `Jogador ${jogadorAtual} Venceu! 🎉`;
+                jogoAtivo = false;
+                return;
+            }
+
+            if (!estadoJogo.includes("")) {
+                turnoDisplay.innerText = "Empate! (Velha) 👵";
+                jogoAtivo = false;
+                return;
+            }
+
+            jogadorAtual = (jogadorAtual === "X") ? "O" : "X";
+            turnoDisplay.innerText = `Vez do Jogador: ${jogadorAtual}`;
+        }
+
+        function reiniciarJogo() {
+            jogadorAtual = "X";
+            jogoAtivo = true;
+            estadoJogo = ["", "", "", "", "", "", "", "", ""];
+            turnoDisplay.innerText = "Vez do Jogador: X";
+            celulas.forEach(celula => {
+                celula.innerText = "";
+                celula.classList.remove('vitoria');
+                celula.style.color = "black";
+            });
+        }
+    </script>
+</body>
+</html>

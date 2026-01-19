@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reino dos Bichinhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Quicksand', sans-serif; background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); min-height: 100vh; }
+        .titulo { font-family: 'Fredoka One', cursive; }
+        .cell { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .cell.winner { background-color: #BBF7D0; animation: bounce 0.6s infinite alternate; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
+        .menu-card { @apply bg-white p-6 rounded-3xl shadow-xl border-4 border-white transition-all hover:scale-105 cursor-pointer text-center; }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <div id="menu" class="max-w-md w-full space-y-4">
+        <h1 class="titulo text-5xl text-center text-orange-400 mb-8">Qual modo vamos brincar?</h1>
+        <div onclick="startMode('local')" class="menu-card border-pink-200">
+            <span class="text-5xl">👫</span>
+            <h2 class="text-2xl font-bold text-pink-500">Dois Jogadores</h2>
+            <p class="text-gray-500">Jogar com quem está do lado</p>
+        </div>
+        <div onclick="startMode('ai')" class="menu-card border-blue-200">
+            <span class="text-5xl">🤖</span>
+            <h2 class="text-2xl font-bold text-blue-500">Contra o Robô</h2>
+            <p class="text-gray-500">Treine com a nossa IA</p>
+        </div>
+        <div onclick="startMode('online')" class="menu-card border-purple-200">
+            <span class="text-5xl">🌐</span>
+            <h2 class="text-2xl font-bold text-purple-500">Jogar Online</h2>
+            <p class="text-gray-500">Conectar com um amigo longe</p>
+        </div>
+    </div>
+
+    <div id="online-setup" class="hidden text-center space-y-4 bg-white p-8 rounded-[40px] shadow-2xl">
+        <h2 class="titulo text-3xl text-purple-600">Conexão Mágica</h2>
+        <p class="font-bold">Seu ID: <span id="my-id" class="text-blue-500 bg-blue-50 px-2 py-1 rounded italic">Carregando...</span></p>
+        <input id="peer-id-input" type="text" placeholder="Cole o ID do amigo aqui" class="border-4 border-purple-100 rounded-full px-4 py-2 w-full outline-none focus:border-purple-400">
+        <button onclick="connectToPeer()" class="bg-purple-500 text-white px-6 py-2 rounded-full font-bold w-full shadow-lg">Conectar e Jogar!</button>
+        <button onclick="location.reload()" class="text-gray-400 text-sm underline">Voltar</button>
+    </div>
+
+    <div id="game-container" class="hidden flex flex-col items-center">
+        <div class="text-center mb-6">
+            <p id="message" class="text-2xl font-bold text-gray-700 bg-white px-8 py-2 rounded-full shadow-md border-2 border-orange-100 italic">
+                Aguardando...
+            </p>
+            <div id="score" class="mt-2 text-orange-500 font-bold">🦁 0 - 0 🐼</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-[50px] shadow-2xl border-b-8 border-gray-100">
+            <div id="board-grid" class="grid grid-cols-3 gap-3">
+                </div>
+        </div>
+
+        <button onclick="location.reload()" class="mt-8 bg-gray-200 text-gray-600 px-8 py-3 rounded-full font-bold hover:bg-gray-300 transition-all">
+            Sair do Jogo
+        </button>
+    </div>
+
+    <script>
+        let mode = ''; // 'local', 'ai', 'online'
+        let board = Array(9).fill('');
+        let currentPlayer = '🦁';
+        let mySymbol = '🦁';
+        let gameActive = true;
+        let scores = { '🦁': 0, '🐼': 0 };
+        
+        // PeerJS para Online
+        let peer, conn;
+
+        function startMode(m) {
+            mode = m;
+            document.getElementById('menu').classList.add('hidden');
+            
+            if (m === 'online') {
+                document.getElementById('online-setup').classList.remove('hidden');
+                setupPeer();
+            } else {
+                initGame();
+            }
+        }
+
+        function initGame() {
+            document.getElementById('online-setup').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            const grid = document.getElementById('board-grid');
+            grid.innerHTML = '';
+            for(let i=0; i<9; i++) {
+                grid.innerHTML += `<button onclick="handleMove(${i})" id="c${i}" class="cell w-24 h-24 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>`;
+            }
+            updateMessage();
+        }
+
+        function handleMove(i) {
+            if (!gameActive || board[i] !== '') return;
+            if (mode === 'online' && currentPlayer !== mySymbol) return;
+
+            makeMove(i);
+
+            if (mode === 'online' && conn) {
+                conn.send({ type: 'move', index: i });
+            }
+
+            if (gameActive && mode === 'ai' && currentPlayer === '🐼') {
+                setTimeout(aiMove, 600);
+            }
+        }
+
+        function makeMove(i) {
+            board[i] = currentPlayer;
+            const cell = document.getElementById(`c${i}`);
+            cell.innerText = currentPlayer;
+            
+            if (checkWin()) {
+                endGame(false);
+            } else if (board.every(c => c !== '')) {
+                endGame(true);
+            } else {
+                currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁';
+                updateMessage();
+            }
+        }
+
+        function aiMove() {
+            let available = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+            if (available.length > 0) {
+                let move = available[Math.floor(Math.random() * available.length)];
+                makeMove(move);
+            }
+        }
+
+        function checkWin() {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let s of wins) {
+                if (board[s[0]] && board[s[0]] === board[s[1]] && board[s[0]] === board[s[2]]) {
+                    s.forEach(idx => document.getElementById(`c${idx}`).classList.add('winner'));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function endGame(draw) {
+            gameActive = false;
+            if (draw) {
+                document.getElementById('message').innerText = "Empatou! 🐾";
+            } else {
+                scores[currentPlayer]++;
+                document.getElementById('message').innerText = `${currentPlayer} Venceu!`;
+                document.getElementById('score').innerText = `🦁 ${scores['🦁']} - ${scores['🐼']} 🐼`;
+                confetti({ particleCount: 150, spread: 60 });
+            }
+            setTimeout(() => resetBoard(), 2000);
+        }
+
+        function resetBoard() {
+            board = Array(9).fill('');
+            gameActive = true;
+            currentPlayer = '🦁';
+            document.querySelectorAll('.cell').forEach(c => { c.innerText = ''; c.classList.remove('winner'); });
+            updateMessage();
+        }
+
+        function updateMessage() {
+            if (mode === 'online') {
+                document.getElementById('message').innerText = currentPlayer === mySymbol ? "Sua vez! ✨" : "Esperando amigo...";
+            } else {
+                document.getElementById('message').innerText = `Vez do ${currentPlayer}`;
+            }
+        }
+
+        // --- LÓGICA ONLINE (PEERJS) ---
+        function setupPeer() {
+            peer = new Peer();
+            peer.on('open', id => document.getElementById('my-id').innerText = id);
+            peer.on('connection', c => {
+                conn = c;
+                mySymbol = '🐼'; // Quem recebe a conexão é o Panda
+                setupConn();
+                initGame();
+            });
+        }
+
+        function connectToPeer() {
+            const peerId = document.getElementById('peer-id-input').value;
+            conn = peer.connect(peerId);
+            mySymbol = '🦁'; // Quem inicia é o Leão
+            setupConn();
+            initGame();
+        }
+
+        function setupConn() {
+            conn.on('data', data => {
+                if (data.type === 'move') makeMove(data.index);
+            });
+            conn.on('open', () => console.log("Conectado!"));
+        }
+    </script>
+</body>
+</html>

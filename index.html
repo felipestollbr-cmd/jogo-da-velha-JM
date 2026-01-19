@@ -1,175 +1,86 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jogo da Velha JM</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: yellowgreen;
-            font-family: sans-serif;
-            touch-action: manipulation;
+        body { font-family: 'Quicksand', sans-serif; background: #f0f9ff; }
+        .titulo-portal { font-family: 'Fredoka One', cursive; }
+        .game-card { 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-bottom-width: 8px;
         }
-
-        #status-container {
-            text-align: center;
-            margin-bottom: 20px;
+        .game-card:hover { 
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
         }
-
-        #turno {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .tabuleiro {
-            display: grid;
-            grid-template-columns: repeat(3, 28vw); 
-            grid-template-rows: repeat(3, 28vw);
-            grid-gap: 8px;
-            background-color: #004;
-            padding: 8px;
-            border-radius: 12px;
-            max-width: 380px;
-            max-height: 380px;
-        }
-
-        .celula {
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-
-        .celula.vitoria {
-            background-color: #4CAF50 !important;
-            color: white !important;
-        }
-
-        .assinatura {
-            margin-top: 30px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #004;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-size: 1rem;
-            border-radius: 8px;
-            border: none;
-            background: #333;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        @media (min-width: 500px) {
-            .tabuleiro {
-                grid-template-columns: repeat(3, 120px);
-                grid-template-rows: repeat(3, 120px);
-            }
+        .bg-pattern {
+            background-color: #f0f9ff;
+            background-image:  radial-gradient(#bae6fd 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
         }
     </style>
 </head>
-<body>
+<body class="bg-pattern min-h-screen">
 
-    <div id="status-container">
-        <div id="turno">Vez do Jogador: X</div>
-        <button onclick="reiniciarJogo()">Reiniciar Jogo</button>
-    </div>
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="titulo-portal text-3xl text-blue-500">EduPlay 🚀</div>
+        <div class="flex gap-4">
+            <span class="bg-white px-4 py-2 rounded-full shadow-sm font-bold text-gray-600">Olá, Amiguinho! 👋</span>
+        </div>
+    </nav>
 
-    <div id="tabuleiro" class="tabuleiro">
-        <div class="celula" data-index="0"></div>
-        <div class="celula" data-index="1"></div>
-        <div class="celula" data-index="2"></div>
-        <div class="celula" data-index="3"></div>
-        <div class="celula" data-index="4"></div>
-        <div class="celula" data-index="5"></div>
-        <div class="celula" data-index="6"></div>
-        <div class="celula" data-index="7"></div>
-        <div class="celula" data-index="8"></div>
-    </div>
+    <header class="text-center py-10 px-4">
+        <h1 class="titulo-portal text-5xl md:text-7xl text-orange-400 mb-4 drop-shadow-sm">
+            Hora da Diversão!
+        </h1>
+        <p class="text-gray-500 text-xl md:text-2xl max-w-2xl mx-auto">
+            Escolha um desafio e mostre que você é o mestre dos jogos!
+        </p>
+    </header>
 
-    <div class="assinatura">by João Marcelo</div>
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <div class="game-card bg-white rounded-[45px] overflow-hidden border-orange-200 flex flex-col shadow-xl">
+            <div class="h-48 bg-orange-100 flex items-center justify-center text-8xl">🦁</div>
+            <div class="p-8 text-center flex-grow">
+                <h3 class="titulo-portal text-3xl text-orange-500 mb-2">Jogo da Velha</h3>
+                <p class="text-gray-500 font-medium mb-6">Desafie seus amigos ou o Robô Panda neste clássico!</p>
+                <a href="jogo-da-velha.html" class="inline-block w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-4 rounded-3xl text-xl shadow-[0_8px_0_#c2410c] active:shadow-none active:translate-y-1 transition-all">
+                    JOGAR AGORA
+                </a>
+            </div>
+        </div>
 
-    <script>
-        const celulas = document.querySelectorAll('.celula');
-        const turnoDisplay = document.getElementById("turno");
-        let jogadorAtual = "X";
-        let jogoAtivo = true;
-        let estadoJogo = ["", "", "", "", "", "", "", "", ""];
+        <div class="game-card bg-white rounded-[45px] overflow-hidden border-indigo-200 flex flex-col shadow-xl opacity-80">
+            <div class="h-48 bg-indigo-100 flex items-center justify-center text-8xl">🧩</div>
+            <div class="p-8 text-center flex-grow">
+                <h3 class="titulo-portal text-3xl text-indigo-500 mb-2">Memória Kids</h3>
+                <p class="text-gray-500 font-medium mb-6">Em breve: Treine sua mente com os bichinhos!</p>
+                <button disabled class="w-full bg-gray-300 text-gray-500 font-bold py-4 rounded-3xl text-xl cursor-not-allowed">
+                    EM BREVE
+                </button>
+            </div>
+        </div>
 
-        const condicoesVitoria = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
+        <div class="game-card bg-white rounded-[45px] overflow-hidden border-green-200 flex flex-col shadow-xl opacity-80">
+            <div class="h-48 bg-green-100 flex items-center justify-center text-8xl">🎨</div>
+            <div class="p-8 text-center flex-grow">
+                <h3 class="titulo-portal text-3xl text-green-500 mb-2">Pintura Mágica</h3>
+                <p class="text-gray-500 font-medium mb-6">Crie artes incríveis com cores vibrantes!</p>
+                <button disabled class="w-full bg-gray-300 text-gray-500 font-bold py-4 rounded-3xl text-xl cursor-not-allowed">
+                    EM BREVE
+                </button>
+            </div>
+        </div>
 
-        function clicarCelula(event) {
-            const celulaClicada = event.target;
-            const index = celulaClicada.getAttribute('data-index');
+    </main>
 
-            if (estadoJogo[index] !== "" || !jogoAtivo) return;
+    <footer class="text-center py-12 text-gray-400 font-medium">
+        Feito com ❤️ para pequenos gênios
+    </footer>
 
-            estadoJogo[index] = jogadorAtual;
-            celulaClicada.innerText = jogadorAtual;
-            celulaClicada.style.color = (jogadorAtual === "X") ? "#d32f2f" : "#1976d2";
-
-            verificarResultado();
-        }
-
-        function verificarResultado() {
-            let rodadaGanhou = false;
-
-            for (let i = 0; i < condicoesVitoria.length; i++) {
-                const [a, b, c] = condicoesVitoria[i];
-                if (estadoJogo[a] && estadoJogo[a] === estadoJogo[b] && estadoJogo[a] === estadoJogo[c]) {
-                    rodadaGanhou = true;
-                    [a, b, c].forEach(idx => celulas[idx].classList.add('vitoria'));
-                    break;
-                }
-            }
-
-            if (rodadaGanhou) {
-                turnoDisplay.innerText = `Jogador ${jogadorAtual} Venceu! 🎉`;
-                jogoAtivo = false;
-                return;
-            }
-
-            if (!estadoJogo.includes("")) {
-                turnoDisplay.innerText = "Empate! 👵";
-                jogoAtivo = false;
-                return;
-            }
-
-            jogadorAtual = (jogadorAtual === "X") ? "O" : "X";
-            turnoDisplay.innerText = `Vez do Jogador: ${jogadorAtual}`;
-        }
-
-        function reiniciarJogo() {
-            jogadorAtual = "X";
-            jogoAtivo = true;
-            estadoJogo = ["", "", "", "", "", "", "", "", ""];
-            turnoDisplay.innerText = "Vez do Jogador: X";
-            celulas.forEach(celula => {
-                celula.innerText = "";
-                celula.classList.remove('vitoria');
-            });
-        }
-
-        celulas.forEach(celula => celula.addEventListener('click', clicarCelula));
-    </script>
 </body>
 </html>

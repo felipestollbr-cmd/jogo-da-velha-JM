@@ -2,94 +2,151 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reino dos Bichinhos + Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EduPlay - Reino dos Bichinhos</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Quicksand', sans-serif; background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); min-height: 100vh; overflow: hidden; }
+        /* Reset e Prevenção de Zoom */
+        * {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); 
+            min-height: 100vh; 
+            overflow: hidden; /* Impede scroll desnecessário no jogo */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
         .titulo { font-family: 'Fredoka One', cursive; }
-        .cell { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
-        .cell.winner { background-color: #BBF7D0; animation: bounce 0.6s infinite alternate; border: 4px solid #22c55e; }
-        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
-        .emoji-bubble { animation: pop-up 2s forwards; position: absolute; pointer-events: none; }
+
+        /* Estilo das Células */
+        .cell { 
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .cell.winner { 
+            background-color: #BBF7D0 !important; 
+            animation: bounce 0.6s infinite alternate; 
+            border: 4px solid #22c55e !important; 
+        }
+
+        @keyframes bounce { 
+            from { transform: scale(1); } 
+            to { transform: scale(1.1); } 
+        }
+
+        /* Animação do Chat */
+        .emoji-bubble { 
+            animation: pop-up 2s forwards; 
+            position: absolute; 
+            pointer-events: none; 
+            z-index: 50;
+        }
+
         @keyframes pop-up {
             0% { transform: translateY(0) scale(0.5); opacity: 0; }
-            20% { transform: translateY(-20px) scale(1.2); opacity: 1; }
-            80% { transform: translateY(-40px) scale(1); opacity: 1; }
-            100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
+            20% { transform: translateY(-30px) scale(1.5); opacity: 1; }
+            80% { transform: translateY(-50px) scale(1); opacity: 1; }
+            100% { transform: translateY(-80px) scale(0.8); opacity: 0; }
+        }
+
+        .menu-card {
+            @apply bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-gray-100 transition-all active:scale-95 cursor-pointer text-center;
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4">
+<body>
 
-    <div id="menu" class="max-w-md w-full space-y-4">
-        <h1 class="titulo text-6xl text-center text-orange-400 mb-8">EduPlay</h1>
-        <div onclick="startMode('local')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-pink-100 cursor-pointer text-center hover:-translate-y-1 transition-all">
-            <span class="text-5xl">👫</span>
-            <h2 class="titulo text-2xl text-pink-500">Dois Jogadores</h2>
-        </div>
-        <div onclick="startMode('ai')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-blue-100 cursor-pointer text-center hover:-translate-y-1 transition-all">
-            <span class="text-5xl">🤖</span>
-            <h2 class="titulo text-2xl text-blue-500">Contra o Robô</h2>
-        </div>
-        <div onclick="startMode('online')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-purple-100 cursor-pointer text-center hover:-translate-y-1 transition-all">
-            <span class="text-5xl">🌐</span>
-            <h2 class="titulo text-2xl text-purple-500">Jogar Online</h2>
-        </div>
-    </div>
-
-    <div id="online-setup" class="hidden max-w-sm w-full bg-white p-8 rounded-[50px] shadow-2xl text-center space-y-6">
-        <h2 class="titulo text-3xl text-purple-600">Código Mágico</h2>
-        <div class="bg-purple-50 p-4 rounded-3xl border-2 border-dashed border-purple-200">
-            <p id="my-id" class="text-2xl font-black text-purple-700 font-mono">Gerando...</p>
-        </div>
-        <input id="peer-id-input" type="text" placeholder="Código do amigo" class="w-full px-6 py-4 rounded-full border-4 border-purple-100 outline-none text-center">
-        <button onclick="connectToPeer()" class="w-full bg-purple-500 text-white titulo py-4 rounded-full shadow-lg">CONECTAR!</button>
-        <button onclick="location.reload()" class="text-gray-400 underline">Voltar</button>
-    </div>
-
-    <div id="game-container" class="hidden flex flex-col items-center relative">
-        <div id="chat-overlay" class="absolute top-0 w-full flex justify-center h-0 overflow-visible"></div>
-        
+    <div id="menu" class="max-w-md w-full space-y-4 px-4">
         <div class="text-center mb-6">
-            <div class="bg-white px-8 py-2 rounded-full shadow-md border-2 border-orange-50 mb-2">
+            <h1 class="titulo text-6xl text-orange-400">EduPlay</h1>
+            <p class="text-blue-400 font-bold">Reino dos Bichinhos 🦁🐼</p>
+        </div>
+        
+        <div onclick="startMode('local')" class="menu-card border-pink-200">
+            <span class="text-5xl">👫</span>
+            <h2 class="titulo text-2xl text-pink-500 mt-2">Dois Jogadores</h2>
+        </div>
+
+        <div onclick="startMode('ai')" class="menu-card border-blue-200">
+            <span class="text-5xl">🤖</span>
+            <h2 class="titulo text-2xl text-blue-500 mt-2">Contra o Robô</h2>
+        </div>
+
+        <div onclick="startMode('online')" class="menu-card border-purple-200">
+            <span class="text-5xl">🌐</span>
+            <h2 class="titulo text-2xl text-purple-500 mt-2">Jogar Online</h2>
+        </div>
+    </div>
+
+    <div id="online-setup" class="hidden max-w-sm w-full bg-white p-8 rounded-[50px] shadow-2xl text-center space-y-6 mx-4">
+        <h2 class="titulo text-3xl text-purple-600">Conexão Mágica</h2>
+        <div class="bg-purple-50 p-4 rounded-3xl border-2 border-dashed border-purple-200">
+            <p class="text-xs text-purple-400 font-bold uppercase mb-1">Seu Código:</p>
+            <p id="my-id" class="text-2xl font-mono font-black text-purple-700">Gerando...</p>
+        </div>
+        <input id="peer-id-input" type="text" placeholder="Código do amigo" class="w-full px-6 py-4 rounded-full border-4 border-purple-100 outline-none text-center text-lg">
+        <button onclick="connectToPeer()" class="w-full bg-purple-500 text-white titulo py-4 rounded-full shadow-lg active:translate-y-1 transition-all">CONECTAR!</button>
+        <button onclick="location.reload()" class="text-gray-400 underline block mx-auto">Voltar ao Menu</button>
+    </div>
+
+    <div id="game-container" class="hidden flex flex-col items-center relative w-full max-w-lg">
+        <div id="chat-overlay" class="absolute top-20 w-full flex justify-center h-0 overflow-visible pointer-events-none"></div>
+
+        <div class="text-center mb-6">
+            <div class="bg-white px-10 py-2 rounded-full shadow-lg border-4 border-orange-50 mb-2 inline-block">
                 <p id="message" class="titulo text-xl text-gray-700">Vez do 🦁</p>
             </div>
-            <div id="score" class="titulo text-2xl text-orange-400">🦁 0 - 0 🐼</div>
+            <div id="score" class="titulo text-3xl text-orange-400">🦁 0 - 0 🐼</div>
         </div>
 
-        <div class="bg-white p-4 rounded-[50px] shadow-2xl border-b-8 border-gray-100">
+        <div class="bg-white p-4 rounded-[55px] shadow-2xl border-b-[12px] border-gray-100">
             <div id="grid" class="grid grid-cols-3 gap-3">
-                <button onclick="handleMove(0)" id="c0" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(1)" id="c1" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(2)" id="c2" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(3)" id="c3" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(4)" id="c4" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(5)" id="c5" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(6)" id="c6" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(7)" id="c7" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
-                <button onclick="handleMove(8)" id="c8" class="cell w-24 h-24 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner"></button>
+                <button onclick="handleMove(0)" id="c0" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(1)" id="c1" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(2)" id="c2" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(3)" id="c3" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(4)" id="c4" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(5)" id="c5" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(6)" id="c6" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(7)" id="c7" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
+                <button onclick="handleMove(8)" id="c8" class="cell w-20 h-20 md:w-28 md:h-28 bg-pink-50 rounded-[35px] flex items-center justify-center text-5xl shadow-inner border-b-4 border-pink-100"></button>
             </div>
         </div>
 
-        <div id="chat-controls" class="hidden mt-6 flex gap-3 bg-white/50 p-3 rounded-full backdrop-blur-sm">
-            <button onclick="sendEmoji('😊')" class="text-3xl hover:scale-125 transition-transform">😊</button>
-            <button onclick="sendEmoji('😂')" class="text-3xl hover:scale-125 transition-transform">😂</button>
-            <button onclick="sendEmoji('😮')" class="text-3xl hover:scale-125 transition-transform">😮</button>
-            <button onclick="sendEmoji('🍦')" class="text-3xl hover:scale-125 transition-transform">🍦</button>
-            <button onclick="sendEmoji('🚀')" class="text-3xl hover:scale-125 transition-transform">🚀</button>
+        <div id="chat-controls" class="hidden mt-6 flex gap-4 bg-white/60 p-4 rounded-full backdrop-blur-md shadow-lg border border-white">
+            <button onclick="sendEmoji('😊')" class="text-4xl active:scale-150 transition-transform">😊</button>
+            <button onclick="sendEmoji('😂')" class="text-4xl active:scale-150 transition-transform">😂</button>
+            <button onclick="sendEmoji('😮')" class="text-4xl active:scale-150 transition-transform">😮</button>
+            <button onclick="sendEmoji('🎉')" class="text-4xl active:scale-150 transition-transform">🎉</button>
+            <button onclick="sendEmoji('🍦')" class="text-4xl active:scale-150 transition-transform">🍦</button>
         </div>
 
-        <button onclick="location.reload()" class="mt-8 text-gray-400 underline">Sair</button>
+        <button onclick="location.reload()" class="mt-8 text-gray-400 font-bold underline">Sair do Jogo</button>
     </div>
 
     <script>
+        // --- VARIÁVEIS DE ESTADO ---
         let mode = '', board = Array(9).fill(''), currentPlayer = '🦁', mySymbol = '🦁';
         let gameActive = true, scores = { '🦁': 0, '🐼': 0 }, peer, conn;
 
+        // --- CONTROLE DE MENUS ---
         function startMode(m) {
             mode = m;
             document.getElementById('menu').classList.add('hidden');
@@ -108,20 +165,42 @@
             updateMessage();
         }
 
+        // --- LÓGICA DO JOGO ---
         function handleMove(i) {
             if (!gameActive || board[i] !== '') return;
             if (mode === 'online' && currentPlayer !== mySymbol) return;
+
             executeMove(i);
-            if (mode === 'online' && conn?.open) conn.send({ type: 'move', index: i });
-            if (gameActive && mode === 'ai' && currentPlayer === '🐼') setTimeout(aiMove, 600);
+
+            if (mode === 'online' && conn?.open) {
+                conn.send({ type: 'move', index: i });
+            }
+
+            if (gameActive && mode === 'ai' && currentPlayer === '🐼') {
+                setTimeout(aiMove, 600);
+            }
         }
 
         function executeMove(i) {
             board[i] = currentPlayer;
             document.getElementById(`c${i}`).innerText = currentPlayer;
-            if (checkWin()) { endGame(false); }
-            else if (board.every(c => c !== '')) { endGame(true); }
-            else { currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; updateMessage(); }
+            
+            if (checkWin()) {
+                endGame(false);
+            } else if (board.every(c => c !== '')) {
+                endGame(true);
+            } else {
+                currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁';
+                updateMessage();
+            }
+        }
+
+        function aiMove() {
+            let empty = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+            if (empty.length > 0) {
+                let move = empty[Math.floor(Math.random() * empty.length)];
+                executeMove(move);
+            }
         }
 
         function checkWin() {
@@ -136,29 +215,38 @@
 
         function endGame(draw) {
             gameActive = false;
-            if (draw) { document.getElementById('message').innerText = "Empatou! 🐾"; }
-            else {
+            if (draw) {
+                document.getElementById('message').innerText = "Empatou! 🐾";
+            } else {
                 scores[currentPlayer]++;
-                document.getElementById('message').innerText = `${currentPlayer} GANHOU!`;
+                document.getElementById('message').innerText = `${currentPlayer} Venceu!`;
                 document.getElementById('score').innerText = `🦁 ${scores['🦁']} - ${scores['🐼']} 🐼`;
-                confetti({ particleCount: 150, spread: 70 });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             }
             setTimeout(() => resetBoard(), 3000);
         }
 
         function resetBoard() {
-            board = Array(9).fill(''); gameActive = true; currentPlayer = '🦁';
-            document.querySelectorAll('.cell').forEach(c => { c.innerText = ''; c.classList.remove('winner'); });
+            board = Array(9).fill('');
+            gameActive = true;
+            currentPlayer = '🦁';
+            document.querySelectorAll('.cell').forEach(c => { 
+                c.innerText = ''; 
+                c.classList.remove('winner'); 
+            });
             updateMessage();
         }
 
         function updateMessage() {
             let msg = document.getElementById('message');
-            if (mode === 'online') msg.innerText = (currentPlayer === mySymbol) ? "Sua vez! ✨" : "Esperando amigo...";
-            else msg.innerText = `Vez do ${currentPlayer}`;
+            if (mode === 'online') {
+                msg.innerText = (currentPlayer === mySymbol) ? "Sua vez! ✨" : "Aguardando amigo...";
+            } else {
+                msg.innerText = `Vez do ${currentPlayer}`;
+            }
         }
 
-        // LÓGICA DE CHAT E PEER
+        // --- LÓGICA DE CHAT E PEERJS ---
         function sendEmoji(emoji) {
             if (mode === 'online' && conn?.open) {
                 conn.send({ type: 'emoji', value: emoji });
@@ -169,7 +257,7 @@
         function showEmoji(emoji) {
             const container = document.getElementById('chat-overlay');
             const el = document.createElement('div');
-            el.className = 'emoji-bubble text-5xl bg-white shadow-lg p-2 rounded-full border-2 border-pink-100';
+            el.className = 'emoji-bubble text-5xl bg-white shadow-xl p-3 rounded-full border-2 border-pink-50';
             el.innerText = emoji;
             container.appendChild(el);
             setTimeout(() => el.remove(), 2000);
@@ -179,8 +267,11 @@
             peer = new Peer();
             peer.on('open', id => document.getElementById('my-id').innerText = id);
             peer.on('connection', c => {
-                conn = c; mySymbol = '🐼';
-                setupConnEvents(); initGame();
+                conn = c; 
+                mySymbol = '🐼'; // Quem recebe a conexão é o Panda
+                setupConnEvents();
+                initGame();
+                alert("Amigo conectado! Você joga com o 🐼");
             });
         }
 
@@ -188,9 +279,12 @@
             const targetId = document.getElementById('peer-id-input').value;
             if (!targetId) return;
             conn = peer.connect(targetId);
-            mySymbol = '🦁';
+            mySymbol = '🦁'; // Quem inicia a conexão é o Leão
             setupConnEvents();
-            conn.on('open', () => initGame());
+            conn.on('open', () => {
+                initGame();
+                alert("Conectado! Você joga com o 🦁");
+            });
         }
 
         function setupConnEvents() {
@@ -198,7 +292,23 @@
                 if (data.type === 'move') executeMove(data.index);
                 if (data.type === 'emoji') showEmoji(data.value);
             });
+            conn.on('close', () => {
+                alert("Amigo desconectado.");
+                location.reload();
+            });
         }
+
+        // --- TRAVAS ADICIONAIS DE ZOOM (MOBILE) ---
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        let lastTouch = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouch <= 300) e.preventDefault();
+            lastTouch = now;
+        }, false);
     </script>
 </body>
 </html>

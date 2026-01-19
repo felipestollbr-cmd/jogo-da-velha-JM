@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#FB923C">
-    <title>EduPlay Kids</title>
+    <title>EduPlay Kids - Online</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -14,14 +14,13 @@
     
     <style>
         * { touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Quicksand', sans-serif; background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); min-height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        body { font-family: 'Quicksand', sans-serif; background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); min-height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .titulo { font-family: 'Fredoka One', cursive; }
         .cell { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .cell.winner { background-color: #BBF7D0 !important; animation: bounce 0.6s infinite alternate; border: 4px solid #22c55e !important; }
         @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
         .btn-home { @apply fixed top-6 left-6 z-50 bg-white p-4 rounded-3xl shadow-lg border-b-4 border-gray-200 active:scale-90 active:border-b-0 transition-all text-3xl; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #A855F7; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .ad-container { @apply mt-4 w-full max-w-sm h-24 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 text-xs; }
     </style>
 </head>
 <body>
@@ -48,29 +47,26 @@
         <h2 class="titulo text-3xl text-purple-600">Conexão Mágica</h2>
         <div onclick="copyMyId()" class="bg-purple-50 p-4 rounded-3xl border-2 border-dashed border-purple-200 cursor-pointer active:scale-95 relative">
             <p class="text-xs text-purple-400 font-bold uppercase mb-2">Seu código:</p>
-            <div id="id-loading"><div class="loader"></div></div>
-            <p id="my-id" class="hidden text-2xl font-mono font-black text-purple-700"></p>
+            <p id="my-id" class="text-xl font-mono font-black text-purple-700 break-all px-2 uppercase italic">Chamando reino...</p>
             <span id="copy-toast" class="hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full">Copiado! ✅</span>
         </div>
-        <input id="peer-id-input" type="text" placeholder="Cole o código do amigo" class="w-full px-6 py-4 rounded-full border-4 border-purple-100 outline-none text-center text-lg">
+        <input id="peer-id-input" type="text" placeholder="Cole o código do amigo" class="w-full px-6 py-4 rounded-full border-4 border-purple-100 outline-none text-center text-lg uppercase">
         <button id="connect-btn" onclick="connectToPeer()" class="w-full bg-purple-500 text-white titulo py-4 rounded-full shadow-[0_6px_0_#6b21a8] active:translate-y-1">CONECTAR!</button>
     </div>
 
     <div id="game-container" class="hidden flex flex-col items-center relative w-full">
-        <div id="chat-overlay" class="absolute top-20 w-full flex justify-center h-0 overflow-visible pointer-events-none"></div>
         <div class="text-center mb-6">
             <div class="bg-white px-8 py-2 rounded-full shadow-md border-4 border-orange-50 mb-2 inline-block">
-                <p id="message" class="titulo text-xl text-gray-700 italic font-bold">Aguardando...</p>
+                <p id="message" class="titulo text-xl text-gray-700 italic font-bold uppercase">🦁 Jogando...</p>
             </div>
             <div id="score" class="titulo text-3xl text-orange-400">🦁 0 - 0 🐼</div>
         </div>
-        <div class="bg-white p-4 rounded-[55px] shadow-2xl border-b-[12px] border-gray-100">
+        <div class="bg-white p-4 rounded-[55px] shadow-2xl border-b-[12px] border-gray-100 mb-4">
             <div id="grid" class="grid grid-cols-3 gap-3"></div>
         </div>
-        <div id="chat-controls" class="hidden mt-6 flex gap-4 bg-white/60 p-3 rounded-full backdrop-blur-md shadow-lg border border-white">
-            <button onclick="sendEmoji('😊')" class="text-4xl active:scale-125 transition-transform">😊</button>
-            <button onclick="sendEmoji('😂')" class="text-4xl active:scale-125 transition-transform">😂</button>
-            <button onclick="sendEmoji('🎉')" class="text-4xl active:scale-125 transition-transform">🎉</button>
+
+        <div class="ad-container">
+            <p>Espaço para Anúncio Google AdSense<br>(Configurar após aprovação)</p>
         </div>
     </div>
 
@@ -90,7 +86,6 @@
         function initGame() {
             document.getElementById('online-setup').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
-            if (mode === 'online') document.getElementById('chat-controls').classList.remove('hidden');
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             for(let i=0; i<9; i++) {
@@ -102,37 +97,25 @@
         function setupPeer() {
             if (peer) peer.destroy();
             
-            // CONFIGURAÇÃO WEBRTC REFORÇADA
+            // CONFIGURAÇÃO REFORÇADA COM SERVIDORES TURN PÚBLICOS
             peer = new Peer({
                 config: {
                     'iceServers': [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun4.l.google.com:19302' },
-                        { urls: 'stun:stun.services.mozilla.com' }
+                        { urls: 'stun:stun.services.mozilla.com' },
+                        // Servidores TURN OpenRelay (úteis para NAT simétrico)
+                        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+                        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
                     ],
-                    'sdpSemantics': 'unified-plan'
+                    'iceTransportPolicy': 'all'
                 }
             });
 
-            peer.on('open', id => {
-                document.getElementById('id-loading').classList.add('hidden');
-                document.getElementById('my-id').innerText = id;
-                document.getElementById('my-id').classList.remove('hidden');
-            });
-
-            peer.on('connection', c => {
-                conn = c;
-                mySymbol = '🐼';
-                setupConnEvents();
-                initGame();
-            });
-
-            peer.on('error', err => {
-                console.error('Erro WebRTC:', err.type);
-                if(err.type === 'browser-incompatible') alert("Seu navegador não suporta este modo online.");
+            peer.on('open', id => { document.getElementById('my-id').innerText = id; });
+            peer.on('connection', c => { conn = c; mySymbol = '🐼'; setupConnEvents(); initGame(); });
+            peer.on('error', err => { 
+                console.error(err);
                 if(err.type === 'network') setTimeout(setupPeer, 3000);
             });
         }
@@ -140,41 +123,15 @@
         function connectToPeer() {
             const t = document.getElementById('peer-id-input').value.trim();
             if (!t) return;
-            
-            const btn = document.getElementById('connect-btn');
-            btn.innerText = "BUSCANDO...";
-            btn.disabled = true;
-
-            conn = peer.connect(t, { 
-                reliable: true,
-                connectionOptions: {
-                    'iceRestart': true,
-                    'getStatsInterval': 1000
-                }
-            });
-            
+            document.getElementById('connect-btn').innerText = "CONECTANDO...";
+            conn = peer.connect(t, { reliable: true });
             mySymbol = '🦁';
-            
-            conn.on('open', () => {
-                setupConnEvents();
-                initGame();
-            });
-
-            // Fallback para falha de Handshake
-            setTimeout(() => {
-                if (!conn.open) {
-                    alert("A conexão WebRTC falhou. Tente trocar do Wi-Fi para o 4G ou vice-versa!");
-                    btn.innerText = "CONECTAR!";
-                    btn.disabled = false;
-                }
-            }, 10000);
+            conn.on('open', () => { setupConnEvents(); initGame(); });
+            setTimeout(() => { if (!conn.open) alert("A conexão WebRTC falhou. Tente trocar para o 4G!"); document.getElementById('connect-btn').innerText = "CONECTAR!"; }, 10000);
         }
 
         function setupConnEvents() {
-            conn.on('data', d => {
-                if (d.type === 'move') executeMove(d.index);
-                if (d.type === 'emoji') showEmoji(d.value);
-            });
+            conn.on('data', d => { if (d.type === 'move') executeMove(d.index); });
             conn.on('close', () => location.reload());
         }
 
@@ -195,6 +152,11 @@
             else { currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; updateMessage(); }
         }
 
+        function aiMove() {
+            let empty = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+            if (empty.length > 0) executeMove(empty[Math.floor(Math.random() * empty.length)]);
+        }
+
         function checkWin() {
             const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
             for (let s of wins) {
@@ -211,7 +173,7 @@
                 scores[currentPlayer]++;
                 document.getElementById('message').innerText = `${currentPlayer} Venceu!`;
                 document.getElementById('score').innerText = `🦁 ${scores['🦁']} - ${scores['🐼']} 🐼`;
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                confetti({ particleCount: 150, spread: 70 });
             } else { document.getElementById('message').innerText = "Empatou! 🐾"; }
             setTimeout(() => resetBoard(), 3000);
         }
@@ -224,28 +186,17 @@
 
         function updateMessage() {
             let msg = document.getElementById('message');
-            if (mode === 'online') msg.innerText = (currentPlayer === mySymbol) ? "Sua vez! ✨" : "Esperando amigo...";
+            if (mode === 'online') msg.innerText = (currentPlayer === mySymbol) ? "Sua vez! ✨" : "Aguardando amigo...";
             else msg.innerText = `Vez do ${currentPlayer}`;
         }
 
         function copyMyId() {
             const idText = document.getElementById('my-id').innerText;
-            if (!idText) return;
             navigator.clipboard.writeText(idText).then(() => {
                 const toast = document.getElementById('copy-toast');
                 toast.classList.remove('hidden');
                 setTimeout(() => toast.classList.add('hidden'), 2000);
             });
-        }
-
-        function sendEmoji(e) { if (mode === 'online' && conn?.open) { conn.send({ type: 'emoji', value: e }); showEmoji(e); } }
-        function showEmoji(e) {
-            const c = document.getElementById('chat-overlay');
-            const el = document.createElement('div');
-            el.className = 'absolute text-5xl bg-white shadow-xl p-2 rounded-full border-2 border-pink-50 animate-bounce';
-            el.innerText = e;
-            c.appendChild(el);
-            setTimeout(() => el.remove(), 2000);
         }
     </script>
 </body>

@@ -1,16 +1,17 @@
 {
   "name": "EduPlay Kids",
   "short_name": "EduPlay",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FFF5F7",
   "theme_color": "#FB923C",
+  "description": "Jogo da Velha divertido para crianças",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3021/3021601.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

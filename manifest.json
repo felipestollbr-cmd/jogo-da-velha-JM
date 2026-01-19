@@ -1,17 +1,18 @@
 {
   "name": "EduPlay Kids",
   "short_name": "EduPlay",
+  "description": "Reino dos Bichinhos: Jogo da velha educativo.",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#FFF5F7",
   "theme_color": "#FB923C",
-  "description": "Jogo da Velha divertido para crianças",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3021/3021601.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

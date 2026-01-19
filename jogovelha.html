@@ -82,7 +82,7 @@
         
         <div class="text-center mb-6">
             <div class="bg-white px-8 py-2 rounded-full shadow-md border-4 border-orange-50 mb-2 inline-block">
-                <p id="message" class="titulo text-xl text-gray-700">Vez do 🦁</p>
+                <p id="message" class="titulo text-xl text-gray-700">Aguardando...</p>
             </div>
             <div id="score" class="titulo text-3xl text-orange-400">🦁 0 - 0 🐼</div>
         </div>
@@ -104,7 +104,7 @@
         let mode = '', board = Array(9).fill(''), currentPlayer = '🦁', mySymbol = '🦁';
         let gameActive = true, scores = { '🦁': 0, '🐼': 0 }, peer, conn;
 
-        // Funções de Navegação
+        // --- NAVEGAÇÃO ---
         function startMode(m) {
             mode = m;
             document.getElementById('menu').classList.add('hidden');
@@ -128,10 +128,10 @@
             updateMessage();
         }
 
-        // Função Copiar Código
+        // --- CÓPIA DE CÓDIGO ---
         function copyMyId() {
             const idText = document.getElementById('my-id').innerText;
-            if (idText === "Gerando...") return;
+            if (idText.includes("Gerando")) return;
             navigator.clipboard.writeText(idText).then(() => {
                 const toast = document.getElementById('copy-toast');
                 toast.classList.remove('hidden');
@@ -139,7 +139,53 @@
             });
         }
 
-        // Lógica do Jogo
+        // --- PEERJS (ONLINE) ---
+        function setupPeer() {
+            if (peer) peer.destroy();
+            peer = new Peer();
+            
+            peer.on('open', id => {
+                document.getElementById('my-id').innerText = id;
+            });
+
+            peer.on('connection', c => {
+                conn = c;
+                mySymbol = '🐼'; 
+                setupConnEvents();
+                initGame();
+            });
+
+            peer.on('error', err => {
+                alert("Erro na conexão: " + err.type);
+            });
+        }
+
+        function connectToPeer() {
+            const targetId = document.getElementById('peer-id-input').value.trim();
+            if (!targetId) return alert("Cole o código do amigo!");
+            
+            document.getElementById('message').innerText = "Conectando...";
+            conn = peer.connect(targetId);
+            mySymbol = '🦁';
+
+            conn.on('open', () => {
+                setupConnEvents();
+                initGame();
+            });
+        }
+
+        function setupConnEvents() {
+            conn.on('data', d => {
+                if (d.type === 'move') executeMove(d.index);
+                if (d.type === 'emoji') showEmoji(d.value);
+            });
+            conn.on('close', () => {
+                alert("Amigo saiu da partida.");
+                location.reload();
+            });
+        }
+
+        // --- JOGABILIDADE ---
         function handleMove(i) {
             if (!gameActive || board[i] !== '') return;
             if (mode === 'online' && currentPlayer !== mySymbol) return;
@@ -155,7 +201,10 @@
             
             if (checkWin()) { endGame(false); }
             else if (board.every(c => c !== '')) { endGame(true); }
-            else { currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; updateMessage(); }
+            else { 
+                currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; 
+                updateMessage(); 
+            }
         }
 
         function aiMove() {
@@ -196,29 +245,6 @@
             else msg.innerText = `Vez do ${currentPlayer}`;
         }
 
-        // Online e Chat
-        function setupPeer() {
-            peer = new Peer();
-            peer.on('open', id => document.getElementById('my-id').innerText = id);
-            peer.on('connection', c => { conn = c; mySymbol = '🐼'; setupConnEvents(); initGame(); });
-        }
-
-        function connectToPeer() {
-            const t = document.getElementById('peer-id-input').value;
-            if (!t) return;
-            conn = peer.connect(t); mySymbol = '🦁';
-            setupConnEvents();
-            conn.on('open', () => initGame());
-        }
-
-        function setupConnEvents() {
-            conn.on('data', d => {
-                if (d.type === 'move') executeMove(d.index);
-                if (d.type === 'emoji') showEmoji(d.value);
-            });
-            conn.on('close', () => { alert("Amigo saiu."); location.reload(); });
-        }
-
         function sendEmoji(e) { if (mode === 'online' && conn?.open) { conn.send({ type: 'emoji', value: e }); showEmoji(e); } }
         function showEmoji(e) {
             const c = document.getElementById('chat-overlay');
@@ -229,12 +255,21 @@
             setTimeout(() => el.remove(), 2000);
         }
 
-        // PWA e Travas
+        // --- PWA E TRAVAS ---
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         let defPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); defPrompt = e; document.getElementById('install-btn').classList.remove('hidden'); });
+        window.addEventListener('beforeinstallprompt', (e) => { 
+            e.preventDefault(); 
+            defPrompt = e; 
+            document.getElementById('install-btn').classList.remove('hidden'); 
+        });
         document.getElementById('install-btn').addEventListener('click', async () => {
-            if (defPrompt) { defPrompt.prompt(); const { outcome } = await defPrompt.userChoice; if (outcome === 'accepted') document.getElementById('install-btn').classList.add('hidden'); defPrompt = null; }
+            if (defPrompt) { 
+                defPrompt.prompt(); 
+                const { outcome } = await defPrompt.userChoice; 
+                if (outcome === 'accepted') document.getElementById('install-btn').classList.add('hidden'); 
+                defPrompt = null; 
+            }
         });
         document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
     </script>

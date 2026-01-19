@@ -21,9 +21,7 @@
         .emoji-bubble { animation: pop-up 2s forwards; position: absolute; z-index: 50; pointer-events: none; }
         @keyframes pop-up { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 20% { transform: translateY(-30px) scale(1.5); opacity: 1; } 100% { transform: translateY(-80px) scale(0.8); opacity: 0; } }
         .btn-home { @apply fixed top-6 left-6 z-50 bg-white p-4 rounded-3xl shadow-lg border-b-4 border-gray-200 active:scale-90 active:border-b-0 transition-all text-3xl; }
-        
-        /* Spinner de Carregamento */
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #A855F7; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #A855F7; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -45,18 +43,14 @@
             <span class="text-5xl">🌐</span>
             <h2 class="titulo text-2xl text-purple-500 mt-2">Jogar Online</h2>
         </div>
-        <button id="install-btn" class="hidden mt-8 bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-lg animate-bounce titulo">Instalar 📱</button>
     </div>
 
     <div id="online-setup" class="hidden max-w-sm w-full bg-white p-8 rounded-[50px] shadow-2xl text-center space-y-6 mx-4">
         <h2 class="titulo text-3xl text-purple-600">Conexão Mágica</h2>
         <div onclick="copyMyId()" class="bg-purple-50 p-4 rounded-3xl border-2 border-dashed border-purple-200 cursor-pointer active:scale-95 relative">
-            <p class="text-xs text-purple-400 font-bold uppercase mb-2">Seu código de amigo:</p>
-            <div id="id-container">
-                <div class="loader mr-2"></div>
-                <span class="text-purple-400 italic">Chamando amiguinhos...</span>
-            </div>
-            <p id="my-id" class="hidden text-2xl font-mono font-black text-purple-700 italic"></p>
+            <p class="text-xs text-purple-400 font-bold uppercase mb-2">Seu código:</p>
+            <div id="id-loading"><div class="loader"></div><p class="text-sm mt-1">Conectando ao Reino...</p></div>
+            <p id="my-id" class="hidden text-2xl font-mono font-black text-purple-700"></p>
             <span id="copy-toast" class="hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full">Copiado! ✅</span>
         </div>
         <input id="peer-id-input" type="text" placeholder="Cole o código do amigo" class="w-full px-6 py-4 rounded-full border-4 border-purple-100 outline-none text-center text-lg">
@@ -67,7 +61,7 @@
         <div id="chat-overlay" class="absolute top-20 w-full flex justify-center h-0 overflow-visible pointer-events-none"></div>
         <div class="text-center mb-6">
             <div class="bg-white px-8 py-2 rounded-full shadow-md border-4 border-orange-50 mb-2 inline-block">
-                <p id="message" class="titulo text-xl text-gray-700 italic">🦁 Jogando...</p>
+                <p id="message" class="titulo text-xl text-gray-700 italic">Vez do Jogador</p>
             </div>
             <div id="score" class="titulo text-3xl text-orange-400">🦁 0 - 0 🐼</div>
         </div>
@@ -106,29 +100,24 @@
             updateMessage();
         }
 
-        function copyMyId() {
-            const idText = document.getElementById('my-id').innerText;
-            if (!idText) return;
-            navigator.clipboard.writeText(idText).then(() => {
-                const toast = document.getElementById('copy-toast');
-                toast.classList.remove('hidden');
-                setTimeout(() => toast.classList.add('hidden'), 2000);
-            });
-        }
-
         function setupPeer() {
             if (peer) peer.destroy();
             
-            // Configuração com servidores STUN do Google para conexão rápida
+            // Configuração reforçada com múltiplos servidores STUN
             peer = new Peer({
-                config: {'iceServers': [
-                    { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' }
-                ]}
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun.services.mozilla.com' }
+                    ]
+                },
+                debug: 1
             });
             
             peer.on('open', id => {
-                document.getElementById('id-container').classList.add('hidden');
+                document.getElementById('id-loading').classList.add('hidden');
                 const idEl = document.getElementById('my-id');
                 idEl.innerText = id;
                 idEl.classList.remove('hidden');
@@ -141,15 +130,18 @@
             });
 
             peer.on('error', err => {
-                console.error(err);
-                if(err.type === 'network') alert("Erro de rede! Verifique sua internet.");
+                console.error('Erro PeerJS:', err.type);
+                if(err.type === 'network') {
+                    // Tenta reconectar após 2 segundos se for erro de rede
+                    setTimeout(setupPeer, 2000);
+                }
             });
         }
 
         function connectToPeer() {
             const t = document.getElementById('peer-id-input').value.trim();
             if (!t) return;
-            conn = peer.connect(t);
+            conn = peer.connect(t, { reliable: true });
             mySymbol = '🦁';
             conn.on('open', () => {
                 setupConnEvents();
@@ -162,7 +154,7 @@
                 if (d.type === 'move') executeMove(d.index);
                 if (d.type === 'emoji') showEmoji(d.value);
             });
-            conn.on('close', () => { alert("Amigo saiu!"); location.reload(); });
+            conn.on('close', () => { location.reload(); });
         }
 
         function handleMove(i) {
@@ -177,8 +169,8 @@
             board[i] = currentPlayer;
             const el = document.getElementById(`c${i}`);
             if (el) el.innerText = currentPlayer;
-            if (checkWin()) { endGame(false); }
-            else if (board.every(c => c !== '')) { endGame(true); }
+            if (checkWin()) endGame(false);
+            else if (board.every(c => c !== '')) endGame(true);
             else { currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; updateMessage(); }
         }
 
@@ -201,7 +193,7 @@
             gameActive = false;
             if (!draw) {
                 scores[currentPlayer]++;
-                document.getElementById('message').innerText = `${currentPlayer} Venceu!`;
+                document.getElementById('message').innerText = `${currentPlayer} GANHOU!`;
                 document.getElementById('score').innerText = `🦁 ${scores['🦁']} - ${scores['🐼']} 🐼`;
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             } else { document.getElementById('message').innerText = "Empatou! 🐾"; }
@@ -220,6 +212,16 @@
             else msg.innerText = `Vez do ${currentPlayer}`;
         }
 
+        function copyMyId() {
+            const idText = document.getElementById('my-id').innerText;
+            if (!idText) return;
+            navigator.clipboard.writeText(idText).then(() => {
+                const toast = document.getElementById('copy-toast');
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 2000);
+            });
+        }
+
         function sendEmoji(e) { if (mode === 'online' && conn?.open) { conn.send({ type: 'emoji', value: e }); showEmoji(e); } }
         function showEmoji(e) {
             const c = document.getElementById('chat-overlay');
@@ -230,13 +232,7 @@
             setTimeout(() => el.remove(), 2000);
         }
 
-        // PWA e Travas
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-        let defPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); defPrompt = e; document.getElementById('install-btn').classList.remove('hidden'); });
-        document.getElementById('install-btn').addEventListener('click', async () => {
-            if (defPrompt) { defPrompt.prompt(); defPrompt = null; }
-        });
         document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
     </script>
 </body>

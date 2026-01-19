@@ -1,15 +1,16 @@
 {
-  "name": "Jogo da Velha João Marcelo",
-  "short_name": "VelhaJM",
+  "name": "EduPlay Kids",
+  "short_name": "EduPlay",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#9ACD32",
-  "theme_color": "#9ACD32",
+  "background_color": "#FFF5F7",
+  "theme_color": "#FB923C",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/566/566294.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/3021/3021601.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>EduPlay Kids - Reino dos Bichinhos</title>
+    <title>EduPlay Kids</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -12,22 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
-        * { 
-            touch-action: manipulation; 
-            -webkit-touch-callout: none; 
-            -webkit-user-select: none; 
-            user-select: none; 
-            -webkit-tap-highlight-color: transparent;
-        }
-        body { 
-            font-family: 'Quicksand', sans-serif; 
-            background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); 
-            min-height: 100vh; 
-            overflow: hidden; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
+        * { touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Quicksand', sans-serif; background: radial-gradient(circle, #FFF5F7 0%, #F0F9FF 100%); min-height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .titulo { font-family: 'Fredoka One', cursive; }
         .cell { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .cell.winner { background-color: #BBF7D0 !important; animation: bounce 0.6s infinite alternate; border: 4px solid #22c55e !important; }
@@ -35,6 +21,10 @@
         .emoji-bubble { animation: pop-up 2s forwards; position: absolute; z-index: 50; pointer-events: none; }
         @keyframes pop-up { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 20% { transform: translateY(-30px) scale(1.5); opacity: 1; } 100% { transform: translateY(-80px) scale(0.8); opacity: 0; } }
         .btn-home { @apply fixed top-6 left-6 z-50 bg-white p-4 rounded-3xl shadow-lg border-b-4 border-gray-200 active:scale-90 active:border-b-0 transition-all text-3xl; }
+        
+        /* Spinner de Carregamento */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #A855F7; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -43,68 +33,57 @@
 
     <div id="menu" class="max-w-md w-full space-y-4 px-4 text-center">
         <h1 class="titulo text-6xl text-orange-400 mb-8 drop-shadow-sm">EduPlay</h1>
-        
-        <div onclick="startMode('local')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-pink-100 cursor-pointer active:scale-95 transition-all">
+        <div onclick="startMode('local')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-pink-100 cursor-pointer active:scale-95">
             <span class="text-5xl">👫</span>
             <h2 class="titulo text-2xl text-pink-500 mt-2">Dois Jogadores</h2>
         </div>
-
-        <div onclick="startMode('ai')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-blue-100 cursor-pointer active:scale-95 transition-all">
+        <div onclick="startMode('ai')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-blue-100 cursor-pointer active:scale-95">
             <span class="text-5xl">🤖</span>
             <h2 class="titulo text-2xl text-blue-500 mt-2">Contra o Robô</h2>
         </div>
-
-        <div onclick="startMode('online')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-purple-100 cursor-pointer active:scale-95 transition-all">
+        <div onclick="startMode('online')" class="bg-white p-6 rounded-[40px] shadow-xl border-b-8 border-purple-100 cursor-pointer active:scale-95">
             <span class="text-5xl">🌐</span>
             <h2 class="titulo text-2xl text-purple-500 mt-2">Jogar Online</h2>
         </div>
-
-        <button id="install-btn" class="hidden mt-8 bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-lg animate-bounce titulo">
-            Instalar no Celular 📱
-        </button>
+        <button id="install-btn" class="hidden mt-8 bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-lg animate-bounce titulo">Instalar 📱</button>
     </div>
 
     <div id="online-setup" class="hidden max-w-sm w-full bg-white p-8 rounded-[50px] shadow-2xl text-center space-y-6 mx-4">
         <h2 class="titulo text-3xl text-purple-600">Conexão Mágica</h2>
-        
-        <div onclick="copyMyId()" class="bg-purple-50 p-4 rounded-3xl border-2 border-dashed border-purple-200 cursor-pointer active:scale-95 transition-all relative">
-            <p class="text-xs text-purple-400 font-bold uppercase mb-1">Toque para copiar o código:</p>
-            <p id="my-id" class="text-2xl font-mono font-black text-purple-700 italic">Gerando...</p>
-            <span id="copy-toast" class="hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full shadow-lg">Copiado! ✅</span>
+        <div onclick="copyMyId()" class="bg-purple-50 p-4 rounded-3xl border-2 border-dashed border-purple-200 cursor-pointer active:scale-95 relative">
+            <p class="text-xs text-purple-400 font-bold uppercase mb-2">Seu código de amigo:</p>
+            <div id="id-container">
+                <div class="loader mr-2"></div>
+                <span class="text-purple-400 italic">Chamando amiguinhos...</span>
+            </div>
+            <p id="my-id" class="hidden text-2xl font-mono font-black text-purple-700 italic"></p>
+            <span id="copy-toast" class="hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full">Copiado! ✅</span>
         </div>
-
         <input id="peer-id-input" type="text" placeholder="Cole o código do amigo" class="w-full px-6 py-4 rounded-full border-4 border-purple-100 outline-none text-center text-lg">
-        <button onclick="connectToPeer()" class="w-full bg-purple-500 text-white titulo py-4 rounded-full shadow-[0_6px_0_#6b21a8] active:translate-y-1 transition-all">CONECTAR!</button>
+        <button onclick="connectToPeer()" class="w-full bg-purple-500 text-white titulo py-4 rounded-full shadow-[0_6px_0_#6b21a8] active:translate-y-1">CONECTAR!</button>
     </div>
 
     <div id="game-container" class="hidden flex flex-col items-center relative w-full">
         <div id="chat-overlay" class="absolute top-20 w-full flex justify-center h-0 overflow-visible pointer-events-none"></div>
-        
         <div class="text-center mb-6">
             <div class="bg-white px-8 py-2 rounded-full shadow-md border-4 border-orange-50 mb-2 inline-block">
-                <p id="message" class="titulo text-xl text-gray-700">Aguardando...</p>
+                <p id="message" class="titulo text-xl text-gray-700 italic">🦁 Jogando...</p>
             </div>
             <div id="score" class="titulo text-3xl text-orange-400">🦁 0 - 0 🐼</div>
         </div>
-
         <div class="bg-white p-4 rounded-[55px] shadow-2xl border-b-[12px] border-gray-100">
-            <div id="grid" class="grid grid-cols-3 gap-3">
-                </div>
+            <div id="grid" class="grid grid-cols-3 gap-3"></div>
         </div>
-
         <div id="chat-controls" class="hidden mt-6 flex gap-4 bg-white/60 p-3 rounded-full backdrop-blur-md shadow-lg border border-white">
             <button onclick="sendEmoji('😊')" class="text-4xl active:scale-125 transition-transform">😊</button>
             <button onclick="sendEmoji('😂')" class="text-4xl active:scale-125 transition-transform">😂</button>
             <button onclick="sendEmoji('🎉')" class="text-4xl active:scale-125 transition-transform">🎉</button>
-            <button onclick="sendEmoji('🍦')" class="text-4xl active:scale-125 transition-transform">🍦</button>
         </div>
     </div>
 
     <script>
-        let mode = '', board = Array(9).fill(''), currentPlayer = '🦁', mySymbol = '🦁';
-        let gameActive = true, scores = { '🦁': 0, '🐼': 0 }, peer, conn;
+        let mode = '', board = Array(9).fill(''), currentPlayer = '🦁', mySymbol = '🦁', gameActive = true, scores = { '🦁': 0, '🐼': 0 }, peer, conn;
 
-        // --- NAVEGAÇÃO ---
         function startMode(m) {
             mode = m;
             document.getElementById('menu').classList.add('hidden');
@@ -119,7 +98,6 @@
             document.getElementById('online-setup').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
             if (mode === 'online') document.getElementById('chat-controls').classList.remove('hidden');
-            
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             for(let i=0; i<9; i++) {
@@ -128,10 +106,9 @@
             updateMessage();
         }
 
-        // --- CÓPIA DE CÓDIGO ---
         function copyMyId() {
             const idText = document.getElementById('my-id').innerText;
-            if (idText.includes("Gerando")) return;
+            if (!idText) return;
             navigator.clipboard.writeText(idText).then(() => {
                 const toast = document.getElementById('copy-toast');
                 toast.classList.remove('hidden');
@@ -139,35 +116,41 @@
             });
         }
 
-        // --- PEERJS (ONLINE) ---
         function setupPeer() {
             if (peer) peer.destroy();
-            peer = new Peer();
+            
+            // Configuração com servidores STUN do Google para conexão rápida
+            peer = new Peer({
+                config: {'iceServers': [
+                    { url: 'stun:stun.l.google.com:19302' },
+                    { url: 'stun:stun1.l.google.com:19302' }
+                ]}
+            });
             
             peer.on('open', id => {
-                document.getElementById('my-id').innerText = id;
+                document.getElementById('id-container').classList.add('hidden');
+                const idEl = document.getElementById('my-id');
+                idEl.innerText = id;
+                idEl.classList.remove('hidden');
             });
 
             peer.on('connection', c => {
-                conn = c;
-                mySymbol = '🐼'; 
+                conn = c; mySymbol = '🐼';
                 setupConnEvents();
                 initGame();
             });
 
             peer.on('error', err => {
-                alert("Erro na conexão: " + err.type);
+                console.error(err);
+                if(err.type === 'network') alert("Erro de rede! Verifique sua internet.");
             });
         }
 
         function connectToPeer() {
-            const targetId = document.getElementById('peer-id-input').value.trim();
-            if (!targetId) return alert("Cole o código do amigo!");
-            
-            document.getElementById('message').innerText = "Conectando...";
-            conn = peer.connect(targetId);
+            const t = document.getElementById('peer-id-input').value.trim();
+            if (!t) return;
+            conn = peer.connect(t);
             mySymbol = '🦁';
-
             conn.on('open', () => {
                 setupConnEvents();
                 initGame();
@@ -179,13 +162,9 @@
                 if (d.type === 'move') executeMove(d.index);
                 if (d.type === 'emoji') showEmoji(d.value);
             });
-            conn.on('close', () => {
-                alert("Amigo saiu da partida.");
-                location.reload();
-            });
+            conn.on('close', () => { alert("Amigo saiu!"); location.reload(); });
         }
 
-        // --- JOGABILIDADE ---
         function handleMove(i) {
             if (!gameActive || board[i] !== '') return;
             if (mode === 'online' && currentPlayer !== mySymbol) return;
@@ -198,13 +177,9 @@
             board[i] = currentPlayer;
             const el = document.getElementById(`c${i}`);
             if (el) el.innerText = currentPlayer;
-            
             if (checkWin()) { endGame(false); }
             else if (board.every(c => c !== '')) { endGame(true); }
-            else { 
-                currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; 
-                updateMessage(); 
-            }
+            else { currentPlayer = currentPlayer === '🦁' ? '🐼' : '🦁'; updateMessage(); }
         }
 
         function aiMove() {
@@ -255,21 +230,12 @@
             setTimeout(() => el.remove(), 2000);
         }
 
-        // --- PWA E TRAVAS ---
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        // PWA e Travas
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
         let defPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { 
-            e.preventDefault(); 
-            defPrompt = e; 
-            document.getElementById('install-btn').classList.remove('hidden'); 
-        });
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); defPrompt = e; document.getElementById('install-btn').classList.remove('hidden'); });
         document.getElementById('install-btn').addEventListener('click', async () => {
-            if (defPrompt) { 
-                defPrompt.prompt(); 
-                const { outcome } = await defPrompt.userChoice; 
-                if (outcome === 'accepted') document.getElementById('install-btn').classList.add('hidden'); 
-                defPrompt = null; 
-            }
+            if (defPrompt) { defPrompt.prompt(); defPrompt = null; }
         });
         document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
     </script>

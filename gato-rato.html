@@ -3,192 +3,174 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gato e Rato Online - JM</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    
+    <title>Gato e Rato - João Marcelo</title>
     <style>
+        /* MANTENDO O SEU ESTILO ORIGINAL */
         body {
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; margin: 0; background-color: #2c3e50;
-            font-family: 'Segoe UI', sans-serif; color: white; touch-action: manipulation;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: yellowgreen;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
         }
 
-        /* Área do Tabuleiro (Grid 8x8) */
-        #game-container {
-            display: grid;
-            grid-template-columns: repeat(8, 10vw);
-            grid-template-rows: repeat(8, 10vw);
-            gap: 2px; background-color: #34495e;
-            padding: 5px; border-radius: 10px;
-            max-width: 350px; max-height: 350px; margin-top: 10px;
+        #placar {
+            color: rgb(0, 7, 7);
+            text-align: center;
+            font-size: 25px;
+            font-weight: bold;
+            margin-bottom: 20px;
         }
 
-        .tile {
-            background-color: #ecf0f1; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
+        /* O tabuleiro exatamente como você desenhou */
+        .tabuleiro {
+            display: flex;
+            flex-direction: column;
+            background-color: #004; /* Fundo escuro para destacar as bordas */
+            padding: 5px;
+            border-radius: 10px;
         }
 
-        /* Controles Celular */
-        .controls {
-            display: grid; grid-template-columns: repeat(3, 60px);
-            gap: 10px; margin: 20px 0;
+        .linha {
+            display: flex;
         }
 
-        .btn-dir {
-            width: 60px; height: 60px; background: #f1c40f; border: none;
-            border-radius: 10px; font-size: 1.5rem; font-weight: bold;
-            color: #2c3e50; cursor: pointer;
+        .celula {
+            width: 100px;
+            height: 100px;
+            border: 1px solid blue;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem; /* Tamanho do Gato e Rato */
+            cursor: pointer;
+            box-sizing: border-box;
+            border-radius: 8px;
+            margin: 2px;
         }
 
-        #btn-up { grid-column: 2; }
-        #btn-left { grid-column: 1; }
-        #btn-right { grid-column: 3; }
-        #btn-down { grid-column: 2; }
-
-        /* Chat e Info */
-        #info-box { text-align: center; margin-top: 10px; }
-        #chat-area {
-            width: 90%; max-width: 350px; background: white;
-            border-radius: 8px; color: black; margin-bottom: 20px;
+        .assinatura {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #004;
+            font-size: 1.2rem;
         }
-        #messages { height: 80px; overflow-y: auto; padding: 8px; font-size: 0.8rem; }
-        .input-group { display: flex; border-top: 1px solid #ddd; }
-        .input-group input { flex: 1; padding: 8px; border: none; border-radius: 0 0 0 8px; }
-        .input-group button { background: #27ae60; color: white; border: none; padding: 8px; border-radius: 0 0 8px 0; }
 
-        .assinatura { margin-bottom: 10px; font-size: 1.1rem; color: #f1c40f; font-weight: bold; }
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+            color: darkred;
+        }
+
+        @media (max-width: 600px) {
+            .celula {
+                width: 90px;
+                height: 90px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div id="info-box">
-        <div id="status">Conectando...</div>
-        <div id="meu-personagem">Você é: ?</div>
-    </div>
+    <div id="placar">Gato vs Rato</div>
+    <div id="status">Clique em uma casa vizinha para mover!</div>
 
-    <div id="game-container"></div>
-
-    <div class="controls">
-        <button class="btn-dir" id="btn-up" onclick="mover('cima')">↑</button>
-        <button class="btn-dir" id="btn-left" onclick="mover('esquerda')">←</button>
-        <button class="btn-dir" id="btn-down" onclick="mover('baixo')">↓</button>
-        <button class="btn-dir" id="btn-right" onclick="mover('direita')">→</button>
-    </div>
-
-    <div id="chat-area">
-        <div id="messages"></div>
-        <div class="input-group">
-            <input type="text" id="chat-in" placeholder="Oi!">
-            <button onclick="enviarMsg()">Enviar</button>
+    <div id="tabuieiro" class="tabuleiro">
+        <div class="linha">
+            <div class="celula" id="c0" onclick="tentarMover(0)"></div>
+            <div class="celula" id="c1" onclick="tentarMover(1)"></div>
+            <div class="celula" id="c2" onclick="tentarMover(2)"></div>
+        </div> 
+         <div class="linha"> 
+            <div class="celula" id="c3" onclick="tentarMover(3)"></div>
+            <div class="celula" id="c4" onclick="tentarMover(4)"></div>
+            <div class="celula" id="c5" onclick="tentarMover(5)"></div>
         </div>
-    </div>
+        <div class="linha">   
+            <div class="celula" id="c6" onclick="tentarMover(6)"></div>
+            <div class="celula" id="c7" onclick="tentarMover(7)"></div>
+            <div class="celula" id="c8" onclick="tentarMover(8)"></div>
+        </div>
+    </div>    
 
     <div class="assinatura">by João Marcelo</div>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE ---
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
-            authDomain: "SEU_PROJETO.firebaseapp.com",
-            databaseURL: "https://SEU_PROJETO.firebaseio.com",
-            projectId: "SEU_PROJETO",
-            appId: "APP_ID"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database().ref('gato_rato_v1');
+        // Posições iniciais
+        let posGato = 0; // Canto superior esquerdo
+        let posRato = 8; // Canto inferior direito
+        let vezDoGato = true;
 
-        let meuPapel = ""; // "gato" ou "rato"
-        let posGato = { x: 0, y: 0 };
-        let posRato = { x: 7, y: 7 };
-        let meuNome = localStorage.getItem('nomeJM') || prompt("Seu nome:");
-        localStorage.setItem('nomeJM', meuNome);
+        const gatoIcon = "🐱";
+        const ratoIcon = "🐭";
 
-        // Gerar Tabuleiro
-        const container = document.getElementById('game-container');
-        for(let i=0; i<64; i++) {
-            let tile = document.createElement('div');
-            tile.classList.add('tile');
-            tile.id = `tile-${i}`;
-            container.appendChild(tile);
-        }
-
-        // Entrar no Jogo
-        db.child('jogadores').once('value', snap => {
-            if(!snap.child('gato').exists()) {
-                meuPapel = "gato";
-                db.child('jogadores/gato').set(meuNome);
-            } else if(!snap.child('rato').exists()) {
-                meuPapel = "rato";
-                db.child('jogadores/rato').set(meuNome);
-            } else {
-                meuPapel = "espectador";
+        function desenhar() {
+            // Limpa todas as células
+            for (let i = 0; i < 9; i++) {
+                document.getElementById('c' + i).innerText = "";
             }
-            document.getElementById('meu-personagem').innerText = `Você é o: ${meuPapel === 'gato' ? '🐱 Gato' : '🐭 Rato'}`;
-        });
+            // Desenha os personagens
+            document.getElementById('c' + posGato).innerText = gatoIcon;
+            document.getElementById('c' + posRato).innerText = ratoIcon;
+            
+            // Atualiza o placar
+            document.getElementById('placar').innerText = vezDoGato ? "Vez do Gato 🐱" : "Vez do Rato 🐭";
+        }
 
-        // Atualizar Tela
-        db.on('value', snap => {
-            const data = snap.val();
-            if(!data) return;
+        function tentarMover(destino) {
+            let origem = vezDoGato ? posGato : posRato;
 
-            posGato = data.posGato || {x:0, y:0};
-            posRato = data.posRato || {x:7, y:7};
+            // Lógica de movimento (apenas para casas vizinhas - horizontal ou vertical)
+            const movimentosValidos = {
+                0: [1, 3],
+                1: [0, 2, 4],
+                2: [1, 5],
+                3: [0, 4, 6],
+                4: [1, 3, 5, 7],
+                5: [2, 4, 8],
+                6: [3, 7],
+                7: [6, 4, 8],
+                8: [5, 7]
+            };
 
-            // Limpar tabuleiro
-            document.querySelectorAll('.tile').forEach(t => t.innerText = "");
+            if (movimentosValidos[origem].includes(destino)) {
+                // Se o destino estiver ocupado pelo outro jogador
+                if (vezDoGato && destino === posRato) {
+                    posGato = destino;
+                    desenhar();
+                    alert("O Gato pegou o Rato! Vitória do Gato! 🐱🏆");
+                    resetar();
+                    return;
+                }
+                
+                if (!vezDoGato && destino === posGato) {
+                    alert("O rato não pode pular no gato! Fuja!");
+                    return;
+                }
 
-            // Desenhar Gato e Rato
-            document.getElementById(`tile-${posGato.y * 8 + posGato.x}`).innerText = "🐱";
-            document.getElementById(`tile-${posRato.y * 8 + posRato.x}`).innerText = "🐭";
+                // Move o jogador
+                if (vezDoGato) posGato = destino;
+                else posRato = destino;
 
-            // Verificar Colisão (Gato pegou Rato)
-            if(posGato.x === posRato.x && posGato.y === posRato.y) {
-                document.getElementById('status').innerText = "O GATO PEGOU O RATO! 🐱🏆";
-                setTimeout(resetarJogo, 3000);
-            } else {
-                document.getElementById('status').innerText = "Caçada em curso...";
+                vezDoGato = !vezDoGato;
+                desenhar();
             }
-
-            // Atualizar Chat
-            const msgDiv = document.getElementById('messages');
-            msgDiv.innerHTML = "";
-            if(data.chat) {
-                Object.values(data.chat).forEach(m => {
-                    msgDiv.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
-                });
-                msgDiv.scrollTop = msgDiv.scrollHeight;
-            }
-        });
-
-        function mover(dir) {
-            if(meuPapel === "espectador") return;
-
-            let p = meuPapel === "gato" ? {...posGato} : {...posRato};
-
-            if(dir === 'cima' && p.y > 0) p.y--;
-            if(dir === 'baixo' && p.y < 7) p.y++;
-            if(dir === 'esquerda' && p.x > 0) p.x--;
-            if(dir === 'direita' && p.x < 7) p.x++;
-
-            if(meuPapel === "gato") db.update({ posGato: p });
-            else db.update({ posRato: p });
         }
 
-        function enviarMsg() {
-            const val = document.getElementById('chat-in').value;
-            if(!val) return;
-            db.child('chat').push({ u: meuNome, t: val });
-            document.getElementById('chat-in').value = "";
+        function resetar() {
+            posGato = 0;
+            posRato = 8;
+            vezDoGato = true;
+            desenhar();
         }
 
-        function resetarJogo() {
-            db.update({
-                posGato: {x:0, y:0},
-                posRato: {x:7, y:7}
-            });
-        }
+        // Inicia o desenho pela primeira vez
+        desenhar();
     </script>
 </body>
 </html>

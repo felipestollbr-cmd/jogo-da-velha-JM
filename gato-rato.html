@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Velha Online JM</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <style>
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; margin: 0; background-color: yellowgreen;
+            font-family: sans-serif; touch-action: manipulation;
+        }
+
+        #placar {
+            display: flex; gap: 20px; margin: 15px; font-weight: bold;
+        }
+
+        .tabuleiro {
+            display: grid; grid-template-columns: repeat(3, 28vw); 
+            grid-template-rows: repeat(3, 28vw); grid-gap: 8px;
+            background-color: #004; padding: 8px; border-radius: 12px;
+            max-width: 350px; max-height: 350px;
+        }
+
+        .celula {
+            background-color: white; display: flex; align-items: center;
+            justify-content: center; font-size: 3rem; font-weight: bold;
+            border-radius: 8px; height: 100%;
+        }
+
+        /* ÁREA DE CHAT */
+        #chat-container {
+            width: 90%; max-width: 350px; background: white;
+            margin-top: 15px; border-radius: 10px; overflow: hidden;
+            display: flex; flex-direction: column; border: 2px solid #004;
+        }
+
+        #mensagens {
+            height: 100px; overflow-y: auto; padding: 10px;
+            font-size: 0.9rem; display: flex; flex-direction: column;
+        }
+
+        .msg { margin-bottom: 5px; }
+        .msg b { color: #004; }
+
+        #chat-input-area { display: flex; border-top: 1px solid #ccc; }
+        #chat-input-area input { flex: 1; padding: 10px; border: none; outline: none; }
+        #chat-input-area button { padding: 10px; background: #004; color: white; border: none; }
+
+        .assinatura { margin: 15px; font-weight: bold; color: #004; }
+    </style>
+</head>
+<body>
+
+    <div id="placar">
+        <span id="p1">Jogador 1 (X)</span> vs <span id="p2">Jogador 2 (O)</span>
+    </div>
+
+    <div id="turno" style="margin-bottom: 10px; font-weight: bold;">Carregando...</div>
+
+    <div id="tabuleiro" class="tabuleiro">
+        <div class="celula" data-index="0"></div>
+        <div class="celula" data-index="1"></div>
+        <div class="celula" data-index="2"></div>
+        <div class="celula" data-index="3"></div>
+        <div class="celula" data-index="4"></div>
+        <div class="celula" data-index="5"></div>
+        <div class="celula" data-index="6"></div>
+        <div class="celula" data-index="7"></div>
+        <div class="celula" data-index="8"></div>
+    </div>
+
+    <div id="chat-container">
+        <div id="mensagens"></div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Diga algo...">
+            <button onclick="enviarMensagem()">></button>
+        </div>
+    </div>
+
+    <div class="assinatura">by João Marcelo</div>
+    <button onclick="reiniciarJogo()" style="margin-bottom: 20px;">Reiniciar Jogo</button>
+
+    <script>
+        // --- CONFIGURAÇÃO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "COLE_AQUI",
+            authDomain: "SEU_APP.firebaseapp.com",
+            databaseURL: "https://SEU_APP.firebaseio.com",
+            projectId: "SEU_APP",
+            appId: "SEU_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database().ref('sala_1');
+
+        // --- LÓGICA DO NOME ---
+        let meuNome = localStorage.getItem('nomeUsuario') || prompt("Qual seu nome?");
+        if (!meuNome) meuNome = "Anônimo";
+        localStorage.setItem('nomeUsuario', meuNome);
+
+        let meuSimbolo = ""; // Será definido ao entrar na sala
+
+        // --- SINCRONIZAÇÃO ---
+        db.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) {
+                // Inicializa sala se estiver vazia
+                reiniciarJogo();
+                return;
+            }
+            atualizarJogo(data);
+        });
+
+        function atualizarJogo(data) {
+            const tabuleiro = data.tabuleiro;
+            const celulasDiv = document.querySelectorAll('.celula');
+            
+            tabuleiro.forEach((valor, i) => {
+                celulasDiv[i].innerText = valor;
+                celulasDiv[i].style.color = valor === "X" ? "red" : "blue";
+            });
+
+            document.getElementById('turno').innerText = `Vez de: ${data.vezDe}`;
+            
+            // Atualizar Chat
+            const chatDiv = document.getElementById('mensagens');
+            chatDiv.innerHTML = "";
+            if (data.chat) {
+                Object.values(data.chat).forEach(m => {
+                    chatDiv.innerHTML += `<div class="msg"><b>${m.user}:</b> ${m.texto}</div>`;
+                });
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            }
+        }
+
+        // --- AÇÕES ---
+        document.querySelectorAll('.celula').forEach(c => {
+            c.addEventListener('click', (e) => {
+                const index = e.target.dataset.index;
+                db.once('value', snapshot => {
+                    const data = snapshot.val();
+                    // Aqui você precisaria de uma lógica para saber se você é X ou O
+                    // Para simplificar: quem clica assume o símbolo da vez
+                    if (data.tabuleiro[index] === "") {
+                        data.tabuleiro[index] = data.vezDe;
+                        data.vezDe = data.vezDe === "X" ? "O" : "X";
+                        db.update(data);
+                    }
+                });
+            });
+        });
+
+        function enviarMensagem() {
+            const input = document.getElementById('chat-input');
+            if (input.value.trim() === "") return;
+            db.child('chat').push({
+                user: meuNome,
+                texto: input.value
+            });
+            input.value = "";
+        }
+
+        function reiniciarJogo() {
+            db.set({
+                tabuleiro: ["","","","","","","","",""],
+                vezDe: "X",
+                chat: {}
+            });
+        }
+    </script>
+</body>
+</html>
